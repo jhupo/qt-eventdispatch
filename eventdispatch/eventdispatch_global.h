@@ -1,0 +1,15 @@
+#ifndef __EVENTDISPATCH_GLOBAL_H__
+#define __EVENTDISPATCH_GLOBAL_H__
+
+#include <QtGlobal>
+
+#if defined(EVENTDISPATCH_LIBRARY)
+#  define EVENTDISPATCH_EXPORT Q_DECL_EXPORT
+#elif defined(EVENTDISPATCH_STATIC_LIBRARY)
+#  define EVENTDISPATCH_EXPORT
+#else
+#  define EVENTDISPATCH_EXPORT Q_DECL_IMPORT
+#endif
+
+
+#endif

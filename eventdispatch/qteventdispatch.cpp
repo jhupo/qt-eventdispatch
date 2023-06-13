@@ -47,24 +47,31 @@ namespace Event {
 
     void QtEventDispatchPrivate::sendPostedEvents(QObject *obj, QtEvent *event, Qt::ConnectionType type)
     {
-        bool ispost = obj->thread() != QThread::currentThread();
-
         switch (type)
         {
         case Qt::AutoConnection:
         {
-            if(ispost)
+            if(ispost = obj->thread() != QThread::currentThread())
                 QCoreApplication::postEvent(obj,event);
             else
+            {
                 QCoreApplication::sendEvent(obj,event);
+                delete event;
+            }
             break;
         }
         case Qt::DirectConnection:
         {
             QCoreApplication::sendEvent(obj,event);
+            delete event;
             break;
         }
         case Qt::BlockingQueuedConnection:
+        {
+            QMetaObject::invokeMethod(obj,"customEvent",type,Q_ARG(QEvent*, event));
+            delete event;
+            break;
+        }
         case Qt::UniqueConnection:
         case Qt::QueuedConnection:
         {
@@ -73,8 +80,6 @@ namespace Event {
         }
         default:break;
         }
-        if(!ispost)
-            delete event;
     }
 
     void QtEventDispatchPrivate::listenerCollects(const int event, QList<QObject *> &objs)

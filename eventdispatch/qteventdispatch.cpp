@@ -51,8 +51,10 @@ namespace Event {
         {
         case Qt::AutoConnection:
         {
-            if(ispost = obj->thread() != QThread::currentThread())
+            if(obj->thread() != QThread::currentThread())
+            {
                 QCoreApplication::postEvent(obj,event);
+            }
             else
             {
                 QCoreApplication::sendEvent(obj,event);
@@ -68,8 +70,10 @@ namespace Event {
         }
         case Qt::BlockingQueuedConnection:
         {
-            QMetaObject::invokeMethod(obj,"customEvent",type,Q_ARG(QEvent*, event));
-            delete event;
+            if(QMetaObject::invokeMethod(obj,"invokeCustomEvent",type,Q_ARG(QEvent*, event)))
+                delete event;
+            else
+                QCoreApplication::postEvent(obj,event);
             break;
         }
         case Qt::UniqueConnection:
@@ -119,12 +123,16 @@ namespace Event {
         }
     }
 
-    void QtEventDispatch::sendPostedEvents(QObject *obj, const int event, const QVariant &var)
+    void QtEventDispatch::sendPostedEvents(QObject *obj, const int event, const QVariant &var, const bool block)
     {
-        if(obj->thread() != QThread::currentThread())
-            QCoreApplication::postEvent(obj,new QtEvent(event,var));
-        else
-            QCoreApplication::sendEvent(obj,&QtEvent(event,var));
+        if(block){
+            QMetaObject::invokeMethod(obj,"invokeCustomEvent",Qt::BlockingQueuedConnection,Q_ARG(QEvent*, &QtEvent(event,var)));
+        }else{
+            if(obj->thread() != QThread::currentThread())
+                QCoreApplication::postEvent(obj,new QtEvent(event,var));
+            else
+                QCoreApplication::sendEvent(obj,&QtEvent(event,var));
+        }
     }
 
     bool QtEventDispatch::registerEvent(const int event, QObject *listener, const Qt::EventPriority priority)

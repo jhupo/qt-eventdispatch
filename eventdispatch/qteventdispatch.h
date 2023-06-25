@@ -29,7 +29,7 @@ namespace Event {
                           const QVariant& val = QVariant(),
                           const Qt::ConnectionType conn = Qt::AutoConnection);
 
-        static void sendPostedEvents(QObject* obj, const int event, const QVariant& var = QVariant());
+        static void sendPostedEvents(QObject* obj, const int event, const QVariant& var = QVariant(), const bool block = false);
 
         bool registerEvent(const int event,
                            QObject* listener,
@@ -42,6 +42,8 @@ namespace Event {
         const QScopedPointer<QtEventDispatchPrivate>     d_ptr;
 
     };
+
+#define QT_DECLARE_INVOKEBLOCK public Q_SLOTS:void invokeCustomEvent(QEvent*event){customEvent(event);}
 
 #define HANDLE_EVENT_BEGIN(name)                                                                        \
         if (event->type() == Event::QtEvent::_Custom_Event_Type_)                                       \
@@ -99,8 +101,9 @@ namespace Event {
             VOID_FOREM_VARIANT(variant)                                                                 \
             Event::QtEventDispatch::sendPostedEvents(obj,event,var);                                    \
         }
+#define PUBLISH_INTERNAL_PRIVATE(obj,event,var,block)                                                   \
+            Event::QtEventDispatch::sendPostedEvents(obj,event,var,block);
 }
-
 
 
 

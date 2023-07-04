@@ -48,7 +48,7 @@ namespace Event {
     void QtEventDispatchPrivate::sendPostedEvents(QObject *obj, QtEvent *event, Qt::ConnectionType type)
     {
 #ifdef LOGGER_DETAILS
-        qInfo()<<obj<<" recv "<<event->customEvent()<<" connect type "<<type;
+        qDebug()<<obj<<" recv "<<event->customEvent()<<" connect type "<<type;
 #endif
         switch (type)
         {
@@ -62,7 +62,7 @@ namespace Event {
             {
                 QCoreApplication::sendEvent(obj,event);
 #ifdef LOGGER_DETAILS
-                qInfo()<<obj<<" The same thread";
+                qDebug()<<obj<<" The same thread";
 #endif
                 delete event;
             }

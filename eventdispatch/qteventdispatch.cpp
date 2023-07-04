@@ -47,6 +47,9 @@ namespace Event {
 
     void QtEventDispatchPrivate::sendPostedEvents(QObject *obj, QtEvent *event, Qt::ConnectionType type)
     {
+#ifdef LOGGER_DETAILS
+        qInfo()<<obj<<" recv "<<event->customEvent()<<" connect type "<<type;
+#endif
         switch (type)
         {
         case Qt::AutoConnection:
@@ -58,6 +61,9 @@ namespace Event {
             else
             {
                 QCoreApplication::sendEvent(obj,event);
+#ifdef LOGGER_DETAILS
+                qInfo()<<obj<<" The same thread";
+#endif
                 delete event;
             }
             break;
@@ -126,12 +132,26 @@ namespace Event {
     void QtEventDispatch::sendPostedEvents(QObject *obj, const int event, const QVariant &var, const bool block)
     {
         if(block){
-            QMetaObject::invokeMethod(obj,"invokeCustomEvent",Qt::BlockingQueuedConnection,Q_ARG(QEvent*, &QtEvent(event,var)));
+            if(QMetaObject::invokeMethod(obj,"invokeCustomEvent",Qt::BlockingQueuedConnection,Q_ARG(QEvent*, &QtEvent(event,var))))
+            {
+#ifdef LOGGER_DETAILS
+                qInfo()<<obj<<" exec invokeCustomEvent";
+#endif
+            }
+            else
+            {
+#ifdef LOGGER_DETAILS
+                qWarning()<<obj<<"exec invokeCustomEvent error";
+#endif
+            }
         }else{
             if(obj->thread() != QThread::currentThread())
                 QCoreApplication::postEvent(obj,new QtEvent(event,var));
             else
                 QCoreApplication::sendEvent(obj,&QtEvent(event,var));
+#ifdef LOGGER_DETAILS
+            qInfo()<<obj<<" "<<event<<" event";
+#endif
         }
     }
 
@@ -140,6 +160,9 @@ namespace Event {
         Q_D(QtEventDispatch);
         QWriteLocker lock(&d->_lock);
         d->_listeners[event][priority].insert(listener);
+#ifdef LOGGER_DETAILS
+        qInfo()<< listener <<" register "<<event<<" event "<<priority<<" level";
+#endif
         return true;
     }
 
@@ -156,12 +179,18 @@ namespace Event {
                 d->_listeners[key][Qt::NormalEventPriority].remove(listener);
                 d->_listeners[key][Qt::LowEventPriority].remove(listener);
             }
+#ifdef LOGGER_DETAILS
+            qInfo()<<listener << " unregister all event";
+#endif
         }
         else
         {
             d->_listeners[event][Qt::HighEventPriority].remove(listener);
             d->_listeners[event][Qt::NormalEventPriority].remove(listener);
             d->_listeners[event][Qt::LowEventPriority].remove(listener);
+#ifdef LOGGER_DETAILS
+            qInfo()<<listener<<" unregister "<<event<<" event";
+#endif
         }
         return true;
     }
